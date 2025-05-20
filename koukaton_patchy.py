@@ -222,7 +222,57 @@ class Gameclear:
         screen.blit(self.gameover_txt, [330, 300])
         screen.blit(self.cry, [261, 290])
         screen.blit(self.cry2, [763, 292])
+        
 
+class Music:
+    """
+    BGMおよび効果音を管理するクラス
+    """
+    def __init__(self) -> None:
+        """
+        ミキサーを初期化し、効果音の辞書を作成する
+        """
+        pg.mixer.init()
+        self.sounds = {}
+
+    def load_bgm(self, file_path: str, volume: float = 0.5) -> None:
+        """
+        BGMを読み込んで音量を設定する
+        """
+        pg.mixer.music.load(file_path)
+        pg.mixer.music.set_volume(volume)
+
+    def play_bgm(self, loop: int = -1) -> None:
+        """
+        BGMを再生する
+        """
+        pg.mixer.music.play(loop)
+
+    def stop_bgm(self) -> None:
+        """
+        BGMを停止する
+        """
+        pg.mixer.music.stop()
+
+    def load_sound(self, name: str, file_path: str) -> None:
+        """
+        効果音を読み込んで辞書に登録する
+        """
+        self.sounds[name] = pg.mixer.Sound(file_path)
+
+    def play_sound(self, name: str) -> None:
+        """
+        指定された名前の効果音を再生する
+        """
+        if name in self.sounds:
+            self.sounds[name].play()
+
+    def set_sound_volume(self, name: str, volume: float) -> None:
+        """
+        指定された効果音の音量を変更する
+        """
+        if name in self.sounds:
+            self.sounds[name].set_volume(volume)
 
 def main():
     pg.display.set_caption("蒲田の逆襲")
@@ -239,28 +289,25 @@ def main():
     beam = None                                 
     tmr = 0
     
-    
-    pg.mixer.init()
-    pg.mixer.music.load("fig/title.mp3") #  BGM
-    pg.mixer.music.play(-1) #  ループ再生
-    pg.mixer.music.set_volume(0.25) #  音量調整
-    
-    #pg.mixer.init()  タイトル画面が出来たら対応箇所に付ける
-    #pg.mixer.music.load("fig/bgm.mp3")
-    #pg.mixer.music.play(-1)
-    shot = pg.mixer.Sound("fig/shot.mp3")
-    clear = pg.mixer.Sound("fig/clear.mp3")
-    gameover = pg.mixer.Sound("fig/gameover.mp3")
-    crash = pg.mixer.Sound("fig/crash.mp3")
-    
-    
+    sound = Music()
+
+    # BGMの読み込みと再生（タイトル画面）
+    sound.load_bgm("fig/title.mp3", volume=0.25)
+    sound.play_bgm()
+
+    # 効果音の登録
+    sound.load_sound("shot", "fig/shot.mp3")
+    sound.load_sound("clear", "fig/clear.mp3")
+    sound.load_sound("gameover", "fig/gameover.mp3")
+    sound.load_sound("crash", "fig/crash.mp3")
+        
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 # スペースキー押下でBeamクラスのインスタンス生成
-                shot.play()
+                sound.play_sound("shot")
                 beam = Beam(bird) #  ショット音
                 beam_list.append(beam)            
         screen.blit(bg_img, [0, 0])
@@ -269,7 +316,7 @@ def main():
                 if bird.rct.colliderect(bomb.rct):
                     # ゲームオーバー時に，こうかとん画像を切り替え，3秒間表示させる
                     pg.mixer.music.pause() #  BGM止める
-                    gameover.play() #  GameOver音
+                    sound.play_sound("gameover") #  GameOver音
                     bird.change_img(8, screen)
                     fonto = pg.font.Font(None, 80)
                     txt = fonto.render("Game Over", True, (255, 0, 0))
@@ -282,7 +329,7 @@ def main():
                 for b, beam_obj in enumerate(beam_list):
                     if beam_obj.rct.colliderect(bomb.rct):
                         # 爆弾とビームが衝突した際にBeamインスタンス，Bombインスタンスを消滅
-                        crash.play() #  爆発音
+                        sound.play_sound("crash") #  爆発音
                         explosion = Explosion(bomb.rct.center, 15)
                         explosion_list.append(explosion)
                         beam_list[b] = None
@@ -317,7 +364,7 @@ def main():
         #  独自の機能：ゲームクリアを表示
         if game_score == NUM_OF_BOMBS:
             pg.mixer.music.pause() #  BGM止める
-            clear.play() #  クリア音
+            sound.play_sound("clear") #  クリア音
             game_clear.update(screen)
             pg.display.update()
             time.sleep(3)
