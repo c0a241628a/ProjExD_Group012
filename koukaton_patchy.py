@@ -260,8 +260,8 @@ def main():
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 # スペースキー押下でBeamクラスのインスタンス生成
-                shot.play() #  ショット音
-                beam = Beam(bird)
+                shot.play()
+                beam = Beam(bird) #  ショット音
                 beam_list.append(beam)            
         screen.blit(bg_img, [0, 0])
         if beam_list is not None:
